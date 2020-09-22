@@ -47,14 +47,12 @@ val_data = pca.transform(val_data)
 
 # Form the parameter grid for the grid search
 param_grid = [
-   {'C':[ .00001, .0001, .001, .01,.1,1,10,100,1000, 10000], 'gamma':[.00001, .0001, .001, .01, .1, 1, 10, 100, 1000, 10000], 'kernel':['rbf','linear']}
+   {'C': [.00001, .0001, .001, .01, .1, 1, 10], 'gamma':[.00001, .0001, .001, .01, .1, 1, 10], 'kernel':['linear']}
 ]
 
-# The LR baseline
-#model = LogisticRegression(C=300, max_iter=10000)
 # The SVM after params are found from grid search
-model = SVC(C=10, gamma=.1, kernel='linear', degree=4)
-# model = GridSearchCV(SVC(), param_grid)
+# model = SVC(C=10, gamma=.1, kernel='linear', degree=4)
+model = GridSearchCV(SVC(), param_grid)
 
 # Time the training
 start_time = time.time()

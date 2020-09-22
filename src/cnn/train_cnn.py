@@ -4,6 +4,7 @@ import pandas as pd
 from tensorflow.keras.utils import multi_gpu_model
 import tensorflow as tf
 
+
 # File used for training neural networks. Some changes are parametrized, but model was changed
 # manually.
 
@@ -39,6 +40,17 @@ def make_fit_gen():
 
 def compile_model(model):
     adam = Adam(lr=0.0002)
+    regularizer = tf.keras.regularizers.l2(0.0015)
+    # lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
+    #     initial_learning_rate=1e-2,
+    #     decay_steps=10000,
+    #     decay_rate=0.9)
+
+    # adam=Adam(lr=lr_schedule)
+    for layer in model.layers:
+        for attr in ['kernel_regularizer']:
+            if hasattr(layer, attr):
+                setattr(layer, attr, regularizer)
     model.compile(
         loss='categorical_crossentropy',
         optimizer=adam,
@@ -52,7 +64,7 @@ model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
     mode='max',
     save_best_only=True)
 
-early_stop = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=20)
+early_stop = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=6)
 
 model = tf.keras.Sequential()
 model.add(trained_model)

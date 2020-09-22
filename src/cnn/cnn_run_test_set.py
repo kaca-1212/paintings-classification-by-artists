@@ -7,8 +7,14 @@ import numpy as np
 
 batch_size = 32
 
+
 def compile_model(model):
     adam = Adam(lr=0.0002)
+    regularizer = tf.keras.regularizers.l2(0.0015)
+    for layer in model.layers:
+        for attr in ['kernel_regularizer']:
+            if hasattr(layer, attr):
+                setattr(layer, attr, regularizer)
     model.compile(
         loss='categorical_crossentropy',
         optimizer=adam,
@@ -16,17 +22,17 @@ def compile_model(model):
     return model
 
 
-def make_test_gen(preprocess_func):
+def make_test_gen(preprocess_func, shape):
     test_datagen = ImageDataGenerator(preprocessing_function=preprocess_func)
 
-    test_generator = test_datagen.flow_from_directory('dataset/cnn_dataset/test', target_size=(224, 224),
+    test_generator = test_datagen.flow_from_directory('./dataset/cnn_dataset/test', target_size=shape,
                                                       batch_size=batch_size, class_mode='categorical', shuffle=False)
     return test_generator
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument(dest='neural_net_type', choices=['densenet121', 'resnet50v2'],
+    parser.add_argument(dest='neural_net_type', choices=['densenet121', 'resnet152v2', 'resnet50v2'],
                         help="Which type of neural network you want to load?")
     parser.add_argument(dest='weights_file', help='Path for weights file.')
 
@@ -34,14 +40,14 @@ def main():
     args = parser.parse_args()
 
     if args.neural_net_type.lower() == 'densenet121':
-        test_gen = make_test_gen(tf.keras.applications.densenet.preprocess_input)
+        test_gen = make_test_gen(tf.keras.applications.densenet.preprocess_input, (224, 224))
         trained_model = tf.keras.applications.DenseNet121(
             classes=1000, weights='imagenet', include_top=False, input_shape=(224, 224, 3)
         )
     elif args.neural_net_type.lower() == 'resnet50v2':
-        test_gen = make_test_gen(tf.keras.applications.resnet_v2.preprocess_input)
+        test_gen = make_test_gen(tf.keras.applications.resnet_v2.preprocess_input, (224, 224))
         trained_model = tf.keras.applications.ResNet50V2(
-            classes=1000, weights='imagenet', include_top=False, input_shape=(299, 299, 3)
+            classes=1000, weights='imagenet', include_top=False, input_shape=(224, 224, 3)
         )
     else:
         print('No valid neural network type entered! Exiting.')
@@ -69,5 +75,6 @@ def main():
     print(report)
 
     model.save('output/cnn/{}.model'.format(args.neural_net_type.lower()))
+
 
 main()
